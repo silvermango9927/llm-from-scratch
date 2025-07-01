@@ -1,4 +1,4 @@
-from tokenizer import tokenizer_bpe
+from concepts.tokenizer import tokenizer_bpe
 
 with open("./data/the-verdict.txt", "r", encoding="utf-8") as f:
     raw_text = f.read()

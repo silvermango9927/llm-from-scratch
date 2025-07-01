@@ -1,6 +1,6 @@
 import gensim.downloader as api
 import torch
-from preprocessing import create_dataloader, raw_text
+from concepts.preprocessing import create_dataloader, raw_text
 model = api.load("word2vec-google-news-300")
 
 word_vectors = model
