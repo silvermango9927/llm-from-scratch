@@ -17,14 +17,16 @@ class LayerNormalization(nn.Module):
     
 # specifically used for gpt-2 training
 class GELU(nn.Module):
-    def __init__(self, emb_dim):
+    def __init__(self):
         super().__init__()
     
     def forward(self, x):
-        return 0.5 * x * (1 + torch.tanh(torch.sqrt(2 / torch.pi) * (x + 0.044715 * torch.pow(x, 3))))
-    
+        return 0.5 * x * (1 + torch.tanh(
+            torch.sqrt(torch.tensor(2.0 / torch.pi)) * 
+            (x + 0.044715 * torch.pow(x, 3))
+        ))    
 class FeedForward(nn.Module):
-    def __init(self, cfg):
+    def __init__(self, cfg):
         super().__init__()
         self.layers = nn.Sequential(
             nn.Linear(cfg['emb_dim'], 4 * cfg['emb_dim']),
@@ -38,32 +40,31 @@ class FeedForward(nn.Module):
 class TransformerBlock(nn.Module):
     def __init__(self, cfg):
         super().__init__()
-        self.attention = MultiHeadAttention(
-            d_in=cfg['emb_dim'],
-            d_out=cfg['emb_dim'],
-            context_length=cfg['context_length'],
-            dropout=cfg['drop_rate'],
-            num_heads=cfg['n_heads'],
-            qkv_bias=cfg['qkv_bias']
-        )
+        self.att = MultiHeadAttention(
+            d_in=cfg["emb_dim"],
+            d_out=cfg["emb_dim"],
+            context_length=cfg["context_length"],
+            num_heads=cfg["n_heads"], 
+            dropout=cfg["drop_rate"],
+            qkv_bias=cfg["qkv_bias"])
         self.ff = FeedForward(cfg)
-        self.norm1 = LayerNormalization(cfg['emb_dim'])
-        self.norm2 = LayerNormalization(cfg['emb_dim'])
-        self.drop_shortcut = nn.Dropout(cfg['drop_rate'])
-    
+        self.norm1 = LayerNormalization(cfg["emb_dim"])
+        self.norm2 = LayerNormalization(cfg["emb_dim"])
+        self.drop_shortcut = nn.Dropout(cfg["drop_rate"])
+
     def forward(self, x):
-        #shortcut for attention
+        # Shortcut connection for attention block
         shortcut = x
         x = self.norm1(x)
-        x = self.attention(x)
+        x = self.att(x)  # Shape [batch_size, num_tokens, emb_size]
         x = self.drop_shortcut(x)
-        x = x + shortcut
+        x = x + shortcut  # Add the original input back
 
-        #shortcut for feedforward
+        # Shortcut connection for feed forward block
         shortcut = x
         x = self.norm2(x)
         x = self.ff(x)
         x = self.drop_shortcut(x)
-        x = x + shortcut
+        x = x + shortcut  # Add the original input back
 
         return x
