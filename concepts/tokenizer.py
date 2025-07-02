@@ -1,8 +1,7 @@
 import re
-import importlib
 import tiktoken
 
-with open("data/the-verdict.txt", "r", encoding='utf-8') as file:
+with open("concepts/data/the-verdict.txt", "r", encoding='utf-8') as file:
     raw_text = file.read()
 
 def split_text(text):
