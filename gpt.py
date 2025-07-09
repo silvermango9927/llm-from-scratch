@@ -43,7 +43,42 @@ class GPTModel(nn.Module):
         logits = self.out_head(x)
         return logits
     
+def generate_text(model, idx, max_new_tokens, context_size):
+    for _ in range(max_new_tokens):
+        idx_cond = idx[:, -context_size:]
+
+        with torch.no_grad():
+            logits = model(idx_cond)
+        
+        logits = logits[:, -1, :]
+        probs = torch.softmax(logits, dim=-1)
+        idx_next = torch.argmax(probs, dim=-1, keepdim=True)
+        idx = torch.cat((idx, idx_next), dim=1)\
+    
+    return idx
+
 torch.manual_seed(123)
-gpt_model = GPTModel(gpt_config)
-output = gpt_model(batch)
-print(output)  # Should be [batch_size, seq_length, vocab_size]
+model = GPTModel(gpt_config)
+out = model(batch)
+print("Input batch:\n", batch)
+print("\nOutput shape:", out.shape)
+print(out)
+
+start_context = "Hello, I am"
+encoded = tokenizer_bpe.encode(start_context)
+print("encoded:", encoded)
+encoded_tensor = torch.tensor(encoded).unsqueeze(0) #A
+print("encoded_tensor.shape:", encoded_tensor.shape)
+
+model.eval() #A
+out = generate_text(
+model=model,
+idx=encoded_tensor,
+max_new_tokens=6,
+context_size=gpt_config["context_length"]
+)
+print("Output:", out)
+print("Output length:", len(out[0]))
+
+decoded_text = tokenizer_bpe.decode(out.squeeze(0).tolist())
+print(decoded_text)
